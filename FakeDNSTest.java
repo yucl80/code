@@ -7,8 +7,7 @@ public class FakeDNSTest {
 
     public static void main(String[] args){     
         FakeDNS fakeDns=FakeDNS.getInstance();
-        fakeDns.install();
-        System.setProperty("illegal-access", "deny");
+        fakeDns.install();    
         try {
             fakeDns.addForwardResolution("test",InetAddress.getByName("192.168.142.2"));
             System.out.println(InetAddress.getByName("www.163.com").getHostAddress());
