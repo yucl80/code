@@ -1,6 +1,10 @@
 # code
 FakeDNS
 
+FakeDNSTest 
+
+run with JVM options   --add-opens java.base/java.net=ALL-UNNAMED
+
 https://git1-us-west.apache.org/repos/asf?p=kudu.git;a=blob;f=java/kudu-client/src/test/java/org/apache/kudu/client/FakeDNS.java;hb=HEAD
 
 
@@ -14,3 +18,6 @@ A new mechanism to configure the use of a hosts file has been introduced.
 A new system property `jdk.net.hosts.file` has been defined. When this system property is set, the name and address resolution calls of `InetAddress`, i.e `getByXXX`, retrieve the relevant mapping from the specified file. The structure of this file is equivalent to that of the `/etc/hosts` file. 
   
 When the system property `jdk.net.hosts.file` is set, and the specified file doesn't exist, the name or address lookup will result in an UnknownHostException. Thus, a non existent hosts file is handled as if the file is empty.
+
+
+https://blog.codefx.org/java/five-command-line-options-to-hack-the-java-9-module-system/
