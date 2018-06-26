@@ -42,3 +42,8 @@ select start, stop from (
     where r.id is null
 ) as x
 where stop <> '';
+
+
+select id, count(*) from sequence
+group by id
+having count(*) > 1;
