@@ -47,3 +47,6 @@ where stop <> '';
 select id, count(*) from sequence
 group by id
 having count(*) > 1;
+
+
+https://www.xaprb.com/blog/2005/12/06/find-missing-numbers-in-a-sequence-with-sql/
