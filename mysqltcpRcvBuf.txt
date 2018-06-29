@@ -1,0 +1,7 @@
+tcpRcvBuf
+
+If connecting using TCP/IP, should the driver set SO_RCV_BUF to the given value? The default value of '0', means use the platform default value for this property)
+
+Default: 0
+
+Since version: 5.0.7
