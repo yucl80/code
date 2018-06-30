@@ -1,0 +1,51 @@
+#设置防火墙及linux安全
+# semanage permissive -a mysqld_t 或 setenforce 0
+# systemctl stop firewalld
+
+#增加Galera yum 源配置
+[galera]
+name = Galera
+baseurl = http://releases.galeracluster.com/galera-3/centos/7/x86_64
+gpgkey = http://releases.galeracluster.com/GPG-KEY-galeracluster.com
+gpgcheck = 1
+
+[mysql-wsrep]
+name = MySQL-wsrep
+baseurl =  http://releases.galeracluster.com/mysql-wsrep-5.7/centos/7/x86_64
+gpgkey = http://releases.galeracluster.com/GPG-KEY-galeracluster.com
+gpgcheck = 1
+
+
+#安装数据库软件
+yum install galera-3  mysql-wsrep-5.7
+
+
+#编辑 /etc/my.conf
+[mysqld]
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+symbolic-links=0
+log-error=/var/log/mysqld.log
+user=mysql
+binlog_format=ROW
+bind-address=192.168.142.172
+default_storage_engine=innodb
+innodb_autoinc_lock_mode=2
+innodb_flush_log_at_trx_commit=0
+innodb_buffer_pool_size=122M
+wsrep_provider=/usr/lib64/galera-3/libgalera_smm.so
+wsrep_provider_options="gcache.size=300M; gcache.page_size=300M"
+wsrep_cluster_name="dev_cluster"
+wsrep_cluster_address="gcomm://192.168.142.171,192.168.142.172，192.168.142.173"
+wsrep_sst_method=rsync
+wsrep_node_name=mysqlnode1
+wsrep_node_address="192.168.142.171"
+
+
+#在其中一台机器上执行
+#mysqld_bootstrap
+
+#在其他两台机器上执行
+systemctl start mysqld
+
+
