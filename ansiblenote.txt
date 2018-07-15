@@ -1,0 +1,21 @@
+- hosts: remote_1
+  tasks:
+    - name: first file check
+      stat:
+        path: /tmp/test.txt
+        get_checksum: yes
+      register: test_file_check_1
+
+...........................................
+- hosts: remote_2
+  tasks: 
+    - name: next check
+      stat:
+        path: /tmp/test.txt
+        get_checksum: yes
+      register: test_file_check_2
+...........................................
+
+- name: Block run only if file has no changes
+  command: /bin/true
+  when: test_file_check_1.stat.checksum == test_file_check_2.stat.checksum
