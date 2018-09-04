@@ -1,0 +1,16 @@
+https://www.mitre.org/sites/default/files/publications/13-3234_Mixing-C-and-Java-for-High-Performance-Computing.pdf
+https://code.google.com/archive/p/jnaerator
+
+
+java -jar jnaerator-0.12-shaded.jar \
+    -runtime JNA \
+    -mode Maven \
+    -mavenGroupId  yucl.com \
+    -mavenArtifactId test_api \
+    -o jna_code \
+    -package com.yucl.test \
+    -f \
+    -library TestApi \
+    lib/testapi.so  lib/TestAPI.h 
+    
+    
