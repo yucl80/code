@@ -10,3 +10,12 @@ sysbench --test=oltp --db-driver=mysql --mysql-db=test --mysql-user=root --mysql
 --max-time=120 --num-threads=12 \
 [prepare|run|cleanup]
 sysbench /usr/share/sysbench/tests/include/oltp_legacy/insert.lua --oltp-table-size=100000 --db-driver=mysql --mysql-db=test --mysql-user=root --mysql-host=127.0.0.1 --mysql-password=###  --threads=2 run
+
+
+wget http://mysqltuner.pl/ -O mysqltuner.pl
+wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/basic_passwords.txt -O basic_passwords.txt
+wget https://raw.githubusercontent.com/major/MySQLTuner-perl/master/vulnerabilities.csv -O vulnerabilities.csv
+perl mysqltuner.pl
+
+
+https://github.com/major/MySQLTuner-perl/blob/master/INTERNALS.md
