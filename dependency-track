@@ -1,0 +1,3 @@
+echo "{ \"projectName\": \"test\",\"autoCreate\":true, \"projectVersion\":\"3.1.0\",  \"scan\":\"$(base64 dependency-check-report.xml -w 0)\"}" > data
+curl -X "PUT" "http://localhost:8080/api/v1/scan"  -H 'Content-Type: application/json'  -H 'X-API-Key: S9Hh0Eg7eAUOrv4SfIDlLHETH4raYYPi'  --data @data
+rm -f data
