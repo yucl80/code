@@ -1,19 +1,12 @@
 package com.yucl.learn;
 
-import com.mysql.cj.jdbc.ConnectionGroupManager;
-import com.mysql.cj.jdbc.ha.ReplicationConnectionGroup;
 import com.mysql.cj.jdbc.ha.ReplicationConnectionGroupManager;
-import com.mysql.cj.jdbc.jmx.LoadBalanceConnectionGroupManager;
 import com.mysql.cj.jdbc.jmx.ReplicationGroupManager;
-import com.mysql.cj.jdbc.jmx.ReplicationGroupManagerMBean;
-import com.sun.jmx.mbeanserver.JmxMBeanServer;
 
-import javax.management.*;
-import java.lang.management.ManagementFactory;
 import java.sql.*;
 
-public class ReplicationGroupManager {
-    static ReplicationGroupManager replicationGroupManager = new ReplicationGroupManager();
+public class MySqlReplicationGroupManager {
+    //static ReplicationGroupManager replicationGroupManager = new ReplicationGroupManager();
 
     private static String URL = "jdbc:mysql:replication://" +
             "address=(type=master)(host=192.168.142.166)(port=3306),address=(type=slave)(host=192.168.142.167)(port=3306),address=(type=slave)(host=192.168.142.168)(port=3306)/test?" +
@@ -21,7 +14,7 @@ public class ReplicationGroupManager {
 
     public static void main(String[] args) throws Exception {
 
-        replicationGroupManager.registerJmx();
+       // replicationGroupManager.registerJmx();
         for (int i = 0; i < 10000; i++) {
             try (Connection conn = getNewConnection()) {
                 conn.setAutoCommit(false);
@@ -56,11 +49,14 @@ public class ReplicationGroupManager {
 
     static void autoPromoteSlaveToMaster() throws SQLException {
 
-
-        String group = replicationGroupManager.getRegisteredConnectionGroups().split(",")[0];
-        String hosts = replicationGroupManager.getMasterHostsList(group);
+       // ReplicationConnectionGroupManager.getRegisteredReplicationConnectionGroups()
+        //String group = replicationGroupManager.getRegisteredConnectionGroups().split(",")[0];
+        //String hosts = replicationGroupManager.getMasterHostsList(group);
+        String group = ReplicationConnectionGroupManager.getRegisteredReplicationConnectionGroups().split(",")[0];
+        String hosts = ReplicationConnectionGroupManager.getMasterHosts(group).iterator().next();
         System.out.println(hosts);
-        replicationGroupManager.removeMasterHost(group, hosts);
+        //replicationGroupManager.removeMasterHost(group, hosts);
+        ReplicationConnectionGroupManager.removeMasterHost(group, hosts);
         try (Connection conn = getNewConnection()) {
             conn.setAutoCommit(false);
             try (PreparedStatement s = conn.prepareStatement("SELECT * FROM performance_schema.replication_group_members WHERE MEMBER_ID = (SELECT VARIABLE_VALUE FROM performance_schema.global_status WHERE VARIABLE_NAME= 'group_replication_primary_member')")) {
@@ -69,7 +65,8 @@ public class ReplicationGroupManager {
                         String memberHost = rst.getString("MEMBER_HOST");
                         String memberPort = rst.getString("MEMBER_PORT");
                         System.out.println("member:" + memberHost + ":" + memberPort);
-                        replicationGroupManager.promoteSlaveToMaster(group, memberHost + ":" + memberPort);
+                        //replicationGroupManager.promoteSlaveToMaster(group, memberHost + ":" + memberPort);
+                        ReplicationConnectionGroupManager.promoteSlaveToMaster(group, memberHost + ":" + memberPort);
                     }
                 }
 
