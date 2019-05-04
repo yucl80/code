@@ -83,7 +83,7 @@ public class ReplicationGroupManager {
     static Connection getNewConnection() throws SQLException, ClassNotFoundException {
         // Class.forName("com.mysql.jdbc.Driver");
         //Class.forName("com.mysql.jdbc.ReplicationDriver");
-        return DriverManager.getConnection(URL, "root", "yCl2017$");
+        return DriverManager.getConnection(URL, "root", "***");
     }
 
 
