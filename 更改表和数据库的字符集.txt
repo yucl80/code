@@ -1,0 +1,5 @@
+更改表和数据库的字符集：
+
+alter database dbname character set = utf8mb4;
+alter table tbname character set = utf8mb4;
+alter table tbname modify colname char(...) character set utf8mb4;
