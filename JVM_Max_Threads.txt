@@ -1,0 +1,44 @@
+If you encounter Exception in thread "main" java.lang.OutOfMemoryError: unable to create new native thread, check these:
+
+In small memory machines
+
+Every Java thread consume its own stack memory. Default stack size is 1024k (= 1M). You can reduce the stack size like java -Xss512k .... JVM cannot be started if the stack size is too low.
+
+And beware heap memory configurations: (initial) -Xms and (maximum) -Xmx. The more memory is allocated to heap, the less available memory for stack.
+
+System limits
+
+Some values in ulimit -a can affect a thread limit.
+
+max memory size - unlimited on most 64bit machines
+max user processes - linux treats threads like processes
+virtual memory - unlimited on most 64bit machines. virtual memory usage is increased by -Xss configuration (default 1024k)
+You can change these values by (temporal) running ulimit command or (permanent) editing /etc/security/limits.conf.
+
+sys.kernel.threads-max
+
+This value is the system-global (including non-JVM processes) maximum number of threads. Check cat /proc/sys/kernel/threads-max, and increase if necessary.
+
+echo 999999 > /proc/sys/kernel/threads-max
+or
+sys.kernel.threads-max = 999999 in /etc/sysctl.conf to change permanently.
+
+sys.kernel.pid_max
+
+If cat /proc/sys/kernel/pid_max is similar to current limit, increase this. Linux treats threads like processes.
+
+echo 999999 > /proc/sys/kernel/pid_max
+or
+sys.kernel.pid_max = 999999 in /etc/sysctl.conf to change permanently.
+
+And you may need to increase sys.vm.max_map_count, too.
+
+sys.vm.max_map_count
+
+cat /proc/sys/vm/max_map_count should be at least (2 x thread-count).
+
+Attempt to protect stack guard pages failed. and OpenJDK 64-Bit Server VM warning: Attempt to deallocate stack guard pages failed. error messages are emitted by JavaThread::create_stack_guard_pages(), and it calls os::guard_memory(). In Linux, this function is mprotect().
+
+echo 1999999 > /proc/sys/vm/max_map_count
+or
+sys.vm.max_map_count = 1999999 in /etc/sysctl.conf to change permanently.
