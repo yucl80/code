@@ -1,0 +1,12 @@
+select * from table(dbms_xplan.display_cursor(null,null,'ADVANCED ALLSTATS LAST PEEKED_BINDS'));
+
+收集all stats 的方法
+• 默认系统只收集 SQL的typical statistics
+• 为了了解A-Row，Cardinality Feedback等信息需要收集SQL执行的all 
+stats
+• Session级别：
+ALTER SESSION SET STATISTICS_LEVEL=ALL;
+• 诧句级别 使用HINT 
+select /*+ gather_plan_statistics*/ ...
+收集all stats 有额外的负载 回设成默认值:
+ALTER SESSION SET STATISTICS_LEVEL=TYPICAL;
