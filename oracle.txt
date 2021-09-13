@@ -10,3 +10,27 @@ ALTER SESSION SET STATISTICS_LEVEL=ALL;
 select /*+ gather_plan_statistics*/ ...
 收集all stats 有额外的负载 回设成默认值:
 ALTER SESSION SET STATISTICS_LEVEL=TYPICAL;
+
+
+SELECT tf.* FROM DBA_HIST_SQLTEXT ht, table 
+ (DBMS_XPLAN.DISPLAY_AWR(ht.sql_id,null, null, 'ALL' )) tf 
+WHERE ht.sql_text like '%MAC%';
+
+Select * from v$SQLAREA where SQL_ID=„YOUR_SQL_ID‟;
+
+Select * from v$SQL where SQL_id=„YOUR_SQL_ID‟;
+计划:
+Select * from v$SQL_PLAN where SQL_id=„YOUR_SQL_ID‟;
+优化环境:
+Select * from v$SQL_OPTIMIZER_ENV where SQL_id=„YOUR_SQL_ID‟;
+
+正确的执行计划的解析顺序：
+执行计划的解析过程：
+1. 从顶部开始
+2. 在行源中向下移劢，直至找到一个生成数据且丌依赖亍其他数据源的行
+源，这是起始节点
+3. 查看此行源的同级行源。按照从上到下顺序来执行这些行源。
+4. 执行子行源后，接着执行父行源。
+5. 完成此父行源及其子行源后，在树中向上退一级，查看相应父行源的同级
+行源和父行源。按前述方式执行。
+6. 在计划中丌断上移，直至用完所有行源为止。
