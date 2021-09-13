@@ -34,3 +34,5 @@ Select * from v$SQL_OPTIMIZER_ENV where SQL_id=„YOUR_SQL_ID‟;
 5. 完成此父行源及其子行源后，在树中向上退一级，查看相应父行源的同级
 行源和父行源。按前述方式执行。
 6. 在计划中丌断上移，直至用完所有行源为止。
+
+
