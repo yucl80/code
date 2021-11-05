@@ -1,0 +1,1039 @@
+1.You can find TOP Elapsed time SQL in certain hours with below script.
+
+SELECT st.sql_text, sub.sql_id, sub.ELAPSED_TIME PER_EXEC_ELAPSED_TIME_MINUTES
+FROM DBA_HIST_SQLTEXT st,
+( SELECT t.sql_id,
+ROUND (
+SUM (t.elapsed_time_delta / 60000000)
+/ SUM (t.executions_delta))
+ELAPSED_TIME
+FROM dba_hist_sqlstat t, dba_hist_snapshot s, DBA_HIST_SQLTEXT st
+WHERE t.snap_id = s.snap_id
+AND t.dbid = s.dbid
+AND t.instance_number = s.instance_number
+AND t.executions_delta > 0
+AND s.BEGIN_INTERVAL_TIME >
+TO_DATE ('11/15/2018 13:00:00',
+'mm/dd/yyyy hh24:mi:ss')
+AND END_INTERVAL_TIME <
+TO_DATE ('11/15/2018 16:01:00',
+'mm/dd/yyyy hh24:mi:ss')
+GROUP BY t.sql_id
+ORDER BY 2 DESC) sub
+WHERE sub.sql_id = st.sql_id
+ORDER BY 3 DESC;
+
+2.You can find TOP CPU SQL for last 24 hours with following script.
+
+select * from (
+select ss.sql_text,
+    a.SQL_ID, 
+    sum(CPU_TIME_DELTA), 
+    sum(DISK_READS_DELTA),
+    count(*)
+from 
+    DBA_HIST_SQLSTAT a, dba_hist_snapshot s,v$sql ss
+where
+ s.snap_id = a.snap_id and a.sql_id=ss.sql_id
+ and s.begin_interval_time > sysdate -1
+    group by 
+    ss.sql_text,a.SQL_ID
+order by 
+    sum(CPU_TIME_DELTA) desc)
+where rownum<20;
+
+3. You can find TOP IO SQL for last 24 hours with following script.
+select * from 
+(
+SELECT /*+LEADING(x h) USE_NL(h)*/ 
+       h.sql_id
+,      SUM(10) ash_secs
+FROM   dba_hist_snapshot x
+,      dba_hist_active_sess_history h
+WHERE   x.begin_interval_time > sysdate -1
+AND    h.SNAP_id = X.SNAP_id
+AND    h.dbid = x.dbid
+AND    h.instance_number = x.instance_number
+AND    h.event in  ('db file sequential read','db file scattered read')
+GROUP BY h.sql_id
+ORDER BY ash_secs desc )
+where rownum<10;
+
+4. You can find TOP 10 SQL for last 1 hour with following script.
+select * from (
+select active_session_history.sql_id,
+ dba_users.username,
+ sqlarea.sql_text,
+sum(active_session_history.wait_time +
+active_session_history.time_waited) ttl_wait_time
+from v$active_session_history active_session_history,
+v$sqlarea sqlarea,
+ dba_users
+where 
+active_session_history.sample_time between sysdate -  1/24  and sysdate
+  and active_session_history.sql_id = sqlarea.sql_id
+and active_session_history.user_id = dba_users.user_id
+ group by active_session_history.sql_id,sqlarea.sql_text, dba_users.username
+ order by 4 desc )
+where rownum <11;
+
+
+5. You can find TOP 10 SQL for last 1 hour with following script.
+select * from (
+select active_session_history.sql_id,
+ dba_users.username,
+ sqlarea.sql_text,
+sum(active_session_history.wait_time +
+active_session_history.time_waited) ttl_wait_time
+from v$active_session_history active_session_history,
+v$sqlarea sqlarea,
+ dba_users
+where 
+active_session_history.sample_time between sysdate -  1/24  and sysdate
+  and active_session_history.sql_id = sqlarea.sql_id
+and active_session_history.user_id = dba_users.user_id
+ group by active_session_history.sql_id,sqlarea.sql_text, dba_users.username
+ order by 4 desc )
+where rownum <11;
+
+You can check Top Oracle database wait events in Cache which is v$ queries with below script.
+
+select  wait_class,
+       sum(total_waits), sum(time_waited)
+    from gv$session_wait_class
+    where wait_class !='Idle'
+    group by wait_class
+    order by 3 desc;
+
+
+You can check Top Oracle database wait events from Active session history which is v$active_session_history queries with below script.
+
+select * from (
+select active_session_history.event,
+sum(active_session_history.wait_time +
+active_session_history.time_waited) ttl_wait_time
+from gv$active_session_history active_session_history
+where active_session_history.event is not null
+group by active_session_history.event
+order by 2 desc)
+where rownum <= 10;
+
+You can check Top Oracle database wait events at specific intervals. You should type date and SNAP_ID
+
+select snap_id,begin_interval_time,end_interval_time
+from dba_hist_snapshot
+where to_char(begin_interval_time,'DD-MON-YYYY')='20-FEB-2019'
+and EXTRACT(HOUR FROM begin_interval_time) between 8 and 10;
+
+select * from (
+select active_session_history.event,
+sum(active_session_history.wait_time +
+active_session_history.time_waited) ttl_wait_time
+from dba_hist_active_sess_history active_session_history
+where event is not null
+and SNAP_ID between 34411 and 34431
+group by active_session_history.event
+order by 2 desc)
+where rownum<10;
+
+To find any SQL’s SQL_ID and other SQL informations in the cache, use following SQL. Following query will find if related SQL exists in the cache, if not exists it will not find.
+
+select * from gv$sql where sql_text like '%DEVECI%';
+ 
+
+To search any SQL historical in Oracle database you may use following SQL. Just change begin Interval time column and SQL_TEXT column.
+
+ 
+
+SELECT STAT.SQL_ID, SQL_TEXT, PLAN_HASH_VALUE, PARSING_SCHEMA_NAME, ELAPSED_TIME_DELTA, 
+STAT.SNAP_ID, SS.END_INTERVAL_TIME, EXECUTIONS_DELTA FROM DBA_HIST_SQLSTAT STAT, 
+DBA_HIST_SQLTEXT TXT, DBA_HIST_SNAPSHOT SS WHERE STAT.SQL_ID = TXT.SQL_ID AND
+STAT.DBID = TXT.DBID AND SS.DBID = STAT.DBID AND SS.INSTANCE_NUMBER = STAT.INSTANCE_NUMBER 
+AND STAT.SNAP_ID = SS.SNAP_ID AND
+SS.BEGIN_INTERVAL_TIME >= sysdate-31 AND
+UPPER(SQL_TEXT) LIKE '%DEVECI%' ORDER BY ELAPSED_TIME_DELTA DESC;
+
+
+
+You can find average Active session of database with following script.
+
+ 
+
+SELECT 'Load',
+CASE
+WHEN ( ( CAST (end_time.sample_time AS DATE)
+- CAST (start_time.sample_time AS DATE))
+* 24
+* 60
+* 60) = 0
+THEN
+0
+ELSE
+ROUND (
+( COUNT (ash.sample_id)
+/ ( ( CAST (end_time.sample_time AS DATE)
+- CAST (start_time.sample_time AS DATE))
+* 24
+* 60
+* 60)),
+2)
+END
+AS Average_Active_Session
+FROM (SELECT MIN (sample_time) sample_time
+FROM v$active_session_history ash
+WHERE sample_time BETWEEN SYSDATE - 1 / 1440 AND SYSDATE) start_time,
+(SELECT MAX (sample_time) sample_time
+FROM gv$active_session_history
+WHERE sample_time BETWEEN SYSDATE - 1 / 1440 AND SYSDATE) end_time,
+gv$active_session_history ash
+WHERE ash.sample_time BETWEEN start_time.sample_time
+AND end_time.sample_time
+GROUP BY end_time.sample_time, start_time.sample_time;
+
+To list all User Sessions not Background, use following scripts. This script will list you just only User type sessions and their detais.
+
+select * FROM gv$session s, gv$process p
+WHERE s.paddr = p.addr(+)
+and s.TYPE ='USER' and s.username!='SYS';
+ 
+
+You can list how many Active and Inactive User sessions are in the Oracle database with following script.
+
+select count(*) FROM gv$session s, gv$process p
+WHERE s.paddr = p.addr(+)
+and s.TYPE ='USER' and s.username!='SYS';
+
+
+You can list only Active User sessions without sys user with following script
+
+select count(*) FROM gv$session s, gv$process p
+WHERE s.paddr = p.addr(+)
+and s.TYPE ='USER' and s.username!='SYS' and status='ACTIVE';
+ 
+
+You can list only Inactive User sessions without sys user with following script
+
+select count(*) FROM gv$session s, gv$process p
+WHERE s.paddr = p.addr(+)
+and s.TYPE ='USER' and s.username!='SYS' and status='INACTIVE';
+
+You can list all user sessions which are ACTIVE state more than 600 Second with following script.
+
+select count(*) FROM gv$session s, gv$process p
+WHERE s.paddr = p.addr(+)
+and s.TYPE ='USER' and s.username!='SYS' and status='ACTIVE' and last_call_et > 600
+
+You can find out all queries which are not using bind variables with following script. You can see more queries with changing row nums of script.
+
+ 
+
+Select * 
+from (
+With subs as
+(SELECT /*+ materialize */
+m.sql_id, k.*, m.SQL_TEXT, m.SQL_FULLTEXT
+FROM (SELECT inst_id,
+parsing_schema_name AS user_name,
+module,
+plan_hash_value,
+COUNT(0) copies,
+SUM(executions) executions,
+SUM(round(sharable_mem / (1024 * 1024), 2)) sharable_mem_mb
+FROM gv$sqlarea
+WHERE executions < 5
+AND kept_versions = 0
+GROUP BY inst_id, parsing_schema_name, module, plan_hash_value
+HAVING COUNT(0) > 10
+ORDER BY COUNT(0) DESC) k
+LEFT JOIN gv$sqlarea m
+ON k.plan_hash_value = m.plan_hash_value
+WHERE k.plan_hash_value > 0)
+select distinct ki.inst_id,
+t.sql_id,
+ki.sql_text,
+t.plsql_procedure,
+ki.user_name,
+sum(ki.copies) copies,
+sum(ki.executions) executions,
+sum(ki.sharable_mem_mb) sharable_mem_mb
+from (select sql_id,
+program_id,
+program_line#,
+action,
+module,
+service,
+parsing_schema_name,
+round(buffer_gets / decode(executions, 0, 1, executions)) buffer_per_Exec,
+row_number() over(partition by sql_id order by program_id desc, program_line#) sira,
+decode(program_id,
+0,
+null,
+owner || '.' || object_name || '(' || program_line# || ')') plsql_procedure
+from gv$sql a, dba_objects b
+where a.program_id = b.object_id(+)) t,
+subs ki
+where ki.sql_id = t.sql_id
+and t.sira = 1
+group by ki.inst_id,
+t.sql_id,
+ki.sql_text,
+t.plsql_procedure,
+ki.user_name
+order by sum(ki.executions) desc
+)
+where rownum < 51; 
+
+You will find object detail of queries which is not using bind variables.
+With subs as
+(SELECT /*+ materialize */
+   m.sql_id, k.*, m.SQL_TEXT, m.SQL_FULLTEXT
+    FROM (SELECT inst_id,
+                 parsing_schema_name AS user_name,
+                 module,
+                 plan_hash_value,
+                 COUNT(0) copies,
+                 SUM(executions) executions,
+                 SUM(round(sharable_mem / (1024 * 1024), 2)) sharable_mem_mb
+            FROM gv$sqlarea
+           WHERE executions < 5
+             AND kept_versions = 0
+           GROUP BY inst_id, parsing_schema_name, module, plan_hash_value
+          HAVING COUNT(0) > 10
+           ORDER BY COUNT(0) DESC) k
+    LEFT JOIN gv$sqlarea m
+      ON k.plan_hash_value = m.plan_hash_value
+   WHERE k.plan_hash_value > 0)
+select *
+  from (select sql_id,
+               program_id,
+               program_line#,
+               action,
+               module,
+               service,
+               parsing_schema_name,
+               round(buffer_gets / decode(executions, 0, 1, executions)) buffer_per_Exec,
+               row_number() over(partition by sql_id order by program_id desc, program_line#) lines,
+               decode(program_id,
+                      0,
+                      null,
+                      owner || '.' || object_name || '(' || program_line# || ')') plsql_procedure
+          from gv$sql a, dba_objects b
+         where a.program_id = b.object_id(+)) t,
+       subs ki
+where ki.sql_id = t.sql_id
+   and lines = 1;
+   
+ 
+
+
+1.监控索引是否使用
+
+alter index &index_name monitoring usage;
+
+alter index &index_name nomonitoring usage;
+
+select * from v$object_usage where index_name = &index_name;
+
+ 
+
+2.求数据文件的I/O分布
+
+select df.name,phyrds,phywrts,phyblkrd,phyblkwrt,singleblkrds,readtim,writetim
+
+from v$filestat fs,v$dbfile df
+
+where fs.file#=df.file# order by df.name;           
+
+ 
+
+3.求某个隐藏参数的值
+
+col ksppinm format a54
+
+col ksppstvl format a54
+
+select ksppinm, ksppstvl
+
+from x$ksppi pi, x$ksppcv cv
+
+where cv.indx=pi.indx and pi.ksppinm like '\_%' escape '\' and pi.ksppinm like '%meer%';
+
+ 
+
+4.求系统中较大的latch
+
+select name,sum(gets),sum(misses),sum(sleeps),sum(wait_time)
+
+from v$latch_children
+
+group by name having sum(gets) > 50 order by 2;
+
+ 
+
+5.求归档日志的切换频率(生产系统可能时间会很长)
+
+select start_recid,start_time,end_recid,end_time,minutes from (select test.*, rownum as rn
+
+from (select b.recid start_recid,to_char(b.first_time,'yyyy-mm-dd hh24:mi:ss') start_time,
+
+a.recid end_recid,to_char(a.first_time,'yyyy-mm-dd hh24:mi:ss') end_time,round(((a.first_time-b.first_time)*24)*60,2) minutes
+
+from v$log_history a,v$log_history b where a.recid=b.recid+1 and b.first_time > sysdate - 1
+
+order by a.first_time desc) test) y where y.rn < 30
+
+ 
+
+6.求回滚段正在处理的事务
+
+select a.name,b.xacts,c.sid,c.serial#,d.sql_text
+
+from v$rollname a,v$rollstat b,v$session c,v$sqltext d,v$transaction e
+
+where a.usn=b.usn and b.usn=e.xidusn and c.taddr=e.addr
+
+and c.sql_address=d.address and c.sql_hash_value=d.hash_value order by a.name,c.sid,d.piece;
+
+ 
+
+7.求出无效的对象
+
+select 'alter procedure '||object_name||' compile;'
+
+from dba_objects
+
+where status='INVALID' and wner='&' and object_type in ('PACKAGE','PACKAGE BODY');
+
+/
+
+select owner,object_name,object_type,status from dba_objects where status='INVALID';
+
+ 
+
+8.求process/session的状态
+
+select p.pid,p.spid,s.program,s.sid,s.serial#
+
+from v$process p,v$session s where s.paddr=p.addr;
+
+ 
+
+9.求当前session的状态
+
+select sn.name,ms.value
+
+from v$mystat ms,v$statname sn
+
+where ms.statistic#=sn.statistic# and ms.value > 0;
+
+ 
+
+10.求表的索引信息
+
+select ui.table_name,ui.index_name
+
+from user_indexes ui,user_ind_columns uic
+
+where ui.table_name=uic.table_name and ui.index_name=uic.index_name
+
+and ui.table_name like '&table_name%' and uic.column_name='&column_name';
+
+ 
+
+11.显示表的外键信息
+
+col search_condition format a54
+
+select table_name,constraint_name
+
+from user_constraints
+
+where constraint_type ='R' and constraint_name in (select constraint_name from user_cons_columns where column_name='&1');
+
+select rpad(child.table_name,25,' ') child_tablename,
+
+rpad(cp.column_name,17,' ') referring_column,rpad(parent.table_name,25,' ') parent_tablename,
+
+rpad(pc.column_name,15,' ') referred_column,rpad(child.constraint_name,25,' ') constraint_name
+
+from user_constraints child,user_constraints parent,
+
+user_cons_columns cp,user_cons_columns pc
+
+where child.constraint_type = 'R' and child.r_constraint_name = parent.constraint_name and
+
+child.constraint_name = cp.constraint_name and parent.constraint_name = pc.constraint_name and
+
+cp.position = pc.position and child.table_name ='&table_name'
+
+order by child.owner,child.table_name,child.constraint_name,cp.position;
+
+ 
+
+12.显示表的分区及子分区(user_tab_subpartitions)
+
+col table_name format a16
+
+col partition_name format a16
+
+col high_value format a81
+
+select table_name,partition_name,HIGH_VALUE from user_tab_partitions where table_name='&table_name'
+
+ 
+
+13.使用dbms_xplan生成一个执行计划
+
+explain plan set statement_id = '&sql_id' for &sql;
+
+select * from table(dbms_xplan.display);
+
+.求某个事务的重做信息(bytes)
+
+select s.name,m.value
+
+from v$mystat m,v$statname s
+
+where m.statistic#=s.statistic# and s.name like '%redo size%';
+
+ 
+
+14.求cache中缓存超过其5%的对象
+
+select o.owner,o.object_type,o.object_name,count(b.objd)
+
+from v$bh b,dba_objects o
+
+where b.objd = o.object_id
+
+group by o.owner,o.object_type,o.object_name
+
+having count(b.objd) > (select to_number(value)*0.05 from v$parameter where name = 'db_block_buffers');
+
+ 
+
+15.求谁阻塞了某个session(10g)
+
+select sid, username, event, blocking_session,
+
+seconds_in_wait, wait_time
+
+from v$session where state in ('WAITING') and wait_class != 'Idle';
+
+ 
+
+16.求session的OS进程ID
+
+col program format a54
+
+select p.spid "OS Thread", b.name "Name-User", s.program
+
+from v$process p, v$session s, v$bgprocess b
+
+where p.addr = s.paddr and p.addr = b.paddr
+
+UNION ALL
+
+select p.spid "OS Thread", s.username "Name-User", s.program
+
+from v$process p, v$session s where p.addr = s.paddr and s.username is not null;
+
+ 
+
+17.查会话的阻塞
+
+col user_name format a32
+
+select /*+ rule */ lpad(' ',decode(l.xidusn ,0,3,0))||l.oracle_username user_name, o.owner,o.object_name,s.sid,s.serial#
+
+from v$locked_object l,dba_objects o,v$session s
+
+where l.object_id=o.object_id and l.session_id=s.sid order by o.object_id,xidusn desc ;
+
+col username format a15
+
+col lock_level format a8
+
+col owner format a18
+
+col object_name format a32
+
+select /*+ rule */ s.username, decode(l.type,'tm','table lock', 'tx','row lock', null) lock_level, o.owner,o.object_name,s.sid,s.serial#
+
+from v$session s,v$lock l,dba_objects o
+
+where l.sid = s.sid and l.id1 = o.object_id(+) and s.username is not null ;
+
+ 
+
+18.求等待的事件及会话信息/求会话的等待及会话信息
+
+select se.sid,s.username,se.event,se.total_waits,se.time_waited,se.average_wait
+
+from v$session s,v$session_event se
+
+where s.username is not null and se.sid=s.sid and s.status='ACTIVE' and se.event not like '%SQL*Net%' order by s.username;
+
+select s.sid,s.username,sw.event,sw.wait_time,sw.state,sw.seconds_in_wait
+
+from v$session s,v$session_wait sw
+
+where s.username is not null and sw.sid=s.sid and sw.event not like '%SQL*Net%' order by s.username;
+
+ 
+
+19.求会话等待的file_id/block_id
+
+col event format a24
+
+col p1text format a12
+
+col p2text format a12
+
+col p3text format a12
+
+select sid,event,p1text, p1, p2text, p2, p3text, p3
+
+from v$session_wait
+
+where event not like '%SQL%' and event not like '%rdbms%' and event not like '%mon%' order by event;
+
+select name,wait_time from v$latch l where exists (select 1 from (select sid,event,p1text, p1, p2text, p2, p3text, p3
+
+from v$session_wait
+
+where event not like '%SQL%' and event not like '%rdbms%' and event not like '%mon%'
+
+) x where x.p1= l.latch#);
+
+ 
+
+20.求会话等待的对象
+
+col owner format a18
+
+col segment_name format a32
+
+col segment_type format a32
+
+select owner,segment_name,segment_type
+
+from dba_extents
+
+where file_id = &file_id and &block_id between block_id and block_id + blocks - 1;                   
+
+ 
+
+21.求buffer cache中的块信息
+
+select o.OBJECT_TYPE, substr(o.OBJECT_NAME,1,10) objname , b.objd , b.status, count(b.objd)
+
+from v$bh b, dba_objects o
+
+where b.objd = o.data_object_id and o.owner = '&1' group by o.object_type, o.object_name,b.objd, b.status ;
+
+ 
+
+22.求日志文件的空间使用
+
+select le.leseq current_log_sequence#, 100*cp.cpodr_bno/le.lesiz percentage_full
+
+from x$kcccp cp,x$kccle le
+
+where le.leseq =cp.cpodr_seq;
+
+ 
+
+23.求等待中的对象
+
+select /*+rule */ s.sid, s.username, w.event, o.owner, o.segment_name, o.segment_type,
+
+o.partition_name, w.seconds_in_wait seconds, w.state
+
+from v$session_wait w, v$session s, dba_extents o
+
+where w.event in (select name from v$event_name where parameter1 = 'file#'
+
+and parameter2 = 'block#' and name not like 'control%')
+
+and o.owner <> 'sys' and w.sid = s.sid and w.p1 = o.file_id and w.p2 >= o.block_id and w.p2 < o.block_id + o.blocks
+
+ 
+
+24.求当前事务的重做尺寸
+
+select value
+
+from v$mystat, v$statname
+
+where v$mystat.statistic# = v$statname.statistic# and v$statname.name = 'redo size';
+
+                                                                                                                                                           
+
+25.唤醒smon去清除临时段
+
+column pid new_value Smon
+
+set termout off
+
+select p.pid from sys.v_$bgprocess b,sys.v_$process p where b.name = 'SMON' and p.addr = b.paddr
+
+/
+
+set termout on
+
+oradebug wakeup &Smon
+
+undefine Smon
+
+ 
+
+26.求回退率
+
+select b.value/(a.value + b.value),a.value,b.value from v$sysstat a,v$sysstat b
+
+where a.statistic#=4 and b.statistic#=5;
+
+.求DISK READ较多的SQL
+
+select st.sql_text from v$sql s,v$sqltext st
+
+where s.address=st.address and s.hash_value=st.hash_value and s.disk_reads > 300;
+
+ 
+
+28.求DISK SORT严重的SQL
+
+select sess.username, sql.sql_text, sort1.blocks
+
+from v$session sess, v$sqlarea sql, v$sort_usage sort1
+
+where sess.serial# = sort1.session_num
+
+and sort1.sqladdr = sql.address
+
+and sort1.sqlhash = sql.hash_value and sort1.blocks > 200;
+
+ 
+
+29.求对象的创建代码
+
+column column_name format a36
+
+column sql_text format a99
+
+select dbms_metadata.get_ddl('TABLE','&1') from dual;
+
+select dbms_metadata.get_ddl('INDEX','&1') from dual;
+
+ 
+
+30.求表的索引
+
+set linesize 131
+
+select a.index_name,a.column_name,b.status, b.index_type
+
+from user_ind_columns a,user_indexes b
+
+where a.index_name=b.index_name and a.table_name='&1';
+
+求索引中行数较多的
+
+select index_name,blevel,num_rows,CLUSTERING_FACTOR,status from user_indexes where num_rows > 10000 and blevel > 0
+
+select table_name,index_name,blevel,num_rows,CLUSTERING_FACTOR,status from user_indexes where status <> 'VALID'
+
+ 
+
+31.求当前会话的SID，SERIAL#
+
+select sid, serial# from v$session where audsid = SYS_CONTEXT('USERENV','SESSIONID');
+
+.求表空间的未用空间
+
+col mbytes format 9999.9999
+
+select tablespace_name,sum(bytes)/1024/1024 mbytes from dba_free_space group by tablespace_name;
+
+ 
+
+32.求表中定义的触发器
+
+select table_name,index_type,index_name,uniqueness from user_indexes where table_name='&1';
+
+select trigger_name from user_triggers where table_name='&1';
+
+ 
+
+33.求未定义索引的表
+
+select table_name from user_tables where table_name not in (select table_name from user_ind_columns);
+
+ 
+
+34.执行常用的过程
+
+exec print_sql('select count(*) from tab');
+
+exec show_space2('table_name');
+
+ 
+
+35.求free memory
+
+select * from v$sgastat where name='free memory';
+
+select a.name,sum(b.value) from v$statname a,v$sesstat b where a.statistic# = b.statistic# group by a.name;
+
+查看一下谁在使用那个可以得回滚段，或者查看一下某个可以得用户在使用回滚段，
+
+找出领回滚段不断增长的事务，再看看如何处理它，是否可以将它commit，再不行
+
+就看看能否kill它，等等,查看当前正在使用的回滚段的用户信息和回滚段信息:
+
+set linesize 121
+
+SELECT r.name "ROLLBACK SEGMENT NAME ",l.sid "ORACLE PID",p.spid "SYSTEM PID ",s.username "ORACLE USERNAME"
+
+FROM v$lock l, v$process p, v$rollname r, v$session s
+
+WHERE l.sid = p.pid(+) AND s.sid=l.sid AND TRUNC(l.id1(+)/65536) = r.usn AND l.type(+) = 'TX' AND l.lmode(+) = 6 ORDER BY r.name;
+
+ 
+
+36.查看用户的回滚段的信息
+
+select s.username, rn.name from v$session s, v$transaction t, v$rollstat r, v$rollname rn
+
+where s.saddr = t.ses_addr and t.xidusn = r.usn and r.usn = rn.usn
+
+ 
+
+37.生成执行计划
+
+explain plan set statement_id='a1' for &1;
+
+ 
+
+38.查看执行计划
+
+select lpad(' ',2*(level-1))||operation operation,options,OBJECT_NAME,position from plan_table
+
+start with id=0 and statement_id='a1' connect by prior id=parent_id and statement_id='a1'
+
+执行计划
+1）根据SID，从v$sql中找到相应SQL的HASH_VALUE和ADDRESS ；
+Alan Lee(160921) 22:58:07
+2）根据hash_value和address的值，从v$sql_plan中找到真实的执行计划。
+这2步，就可以找出实际正在跑的SQL使用的是什么执行计划
+
+set autotrace traceonly statistics
+set autotrace traceonly explain
+set autotrace traceonly on explain
+
+ 
+
+39.查看内存中存的使用
+
+select decode(greatest(class,10),10,decode(class,1,'Data',2,'Sort',4,'Header',to_char(class)),'Rollback') "Class",
+
+sum(decode(bitand(flag,1),1,0,1)) "Not Dirty",sum(decode(bitand(flag,1),1,1,0)) "Dirty",
+
+sum(dirty_queue) "On Dirty",count(*) "Total"
+
+from x$bh group by decode(greatest(class,10),10,decode(class,1,'Data',2,'Sort',4,'Header',to_char(class)),'Rollback');
+
+ 
+
+40.查看表空间状态
+
+select tablespace_name,extent_management,segment_space_management from dba_tablespaces;
+
+select table_name,freelists,freelist_groups from user_tables;
+
+ 
+
+41.查看系统请求情况
+
+SELECT DECODE (name, 'summed dirty write queue length', value)/
+
+DECODE (name, 'write requests', value) "Write Request Length"
+
+FROM v$sysstat WHERE name IN ( 'summed dirty queue length', 'write requests') and value>0;
+
+ 
+
+42.计算data buffer命中率
+
+select a.value + b.value "logical_reads", c.value "phys_reads",
+
+round(100 * ((a.value+b.value)-c.value) / (a.value+b.value)) "BUFFER HIT RATIO"
+
+from v$sysstat a, v$sysstat b, v$sysstat c
+
+where a.statistic# = 40 and b.statistic# = 41 and c.statistic# = 42;
+
+SELECT name, (1-(physical_reads/(db_block_gets+consistent_gets)))*100 H_RATIO FROM v$buffer_pool_statistics;
+
+ 
+
+43.查看内存使用情况
+
+select least(max(b.value)/(1024*1024),sum(a.bytes)/(1024*1024)) shared_pool_used,
+
+max(b.value)/(1024*1024) shared_pool_size,greatest(max(b.value)/(1024*1024),sum(a.bytes)/(1024*1024))-
+
+(sum(a.bytes)/(1024*1024)) shared_pool_avail,((sum(a.bytes)/(1024*1024))/(max(b.value)/(1024*1024)))*100 avail_pool_pct
+
+from v$sgastat a, v$parameter b where (a.pool='shared pool' and a.name not in ('free memory')) and b.name='shared_pool_size';
+
+ 
+
+44.查看用户使用内存情况
+
+select username, sum(sharable_mem), sum(persistent_mem), sum(runtime_mem)
+
+from sys.v_$sqlarea a, dba_users b
+
+where a.parsing_user_id = b.user_id group by username;
+
+ 
+
+45.查看对象的缓存情况
+
+select OWNER,NAMESPACE,TYPE,NAME,SHARABLE_MEM,LOADS,EXECUTIONS,LOCKS,PINS,KEPT
+
+from v$db_object_cache where type not in ('NOT LOADED','NON-EXISTENT','VIEW','TABLE','SEQUENCE')
+
+and executions>0 and loads>1 and kept='NO' order by owner,namespace,type,executions desc;
+
+select type,count(*) from v$db_object_cache group by type;
+
+ 
+
+46.查看库缓存命中率
+
+select namespace,gets, gethitratio*100 gethitratio,pins,pinhitratio*100 pinhitratio,RELOADS,INVALIDATIONS from v$librarycache
+
+ 
+
+47.查看某些用户的hash
+
+select a.username, count(b.hash_value) total_hash,count(b.hash_value)-count(unique(b.hash_value)) same_hash,
+
+(count(unique(b.hash_value))/count(b.hash_value))*100 u_hash_ratio
+
+from dba_users a, v$sqlarea b where a.user_id=b.parsing_user_id group by a.username;
+
+ 
+
+48.查看字典命中率
+
+select (sum(getmisses)/sum(gets)) ratio from v$rowcache;
+
+ 
+
+49.查看undo段的使用情况
+
+SELECT d.segment_name,extents,optsize,shrinks,aveshrink,aveactive,d.status
+
+FROM v$rollname n,v$rollstat s,dba_rollback_segs d
+
+WHERE d.segment_id=n.usn(+) and d.segment_id=s.usn(+);
+
+ 
+
+50.无效的对象
+
+select owner,object_type,object_name from dba_objects where status='INVALID';
+
+select constraint_name,table_name from dba_constraints where status='INVALID';
+
+ 
+
+51.求出某个进程，并对它进行跟踪
+
+select s.sid,s.serial# from v$session s,v$process p where s.paddr=p.addr and p.spid=&1;
+
+exec dbms_system.SET_SQL_TRACE_IN_SESSION(&1,&2,true);
+
+exec dbms_system.SET_SQL_TRACE_IN_SESSION(&1,&2,false);
+
+ 
+
+ 
+
+52.求出锁定的对象
+
+select do.object_name,session_id,process,locked_mode
+
+from v$locked_object lo, dba_objects do where lo.object_id=do.object_id;
+
+ 
+
+53.求当前session的跟踪文件
+
+SELECT p1.value || '/' || p2.value || '_ora_' || p.spid || '.ora' filename
+
+FROM v$process p, v$session s, v$parameter p1, v$parameter p2
+
+WHERE p1.name = 'user_dump_dest' AND p2.name = 'instance_name'
+
+AND p.addr = s.paddr AND s.audsid = USERENV('SESSIONID') AND p.background is null AND instr(p.program,'CJQ') = 0;
+
+ 
+
+54.求对象所在的文件及块号
+
+select segment_name,header_file,header_block
+
+from dba_segments where segment_name like '&1';
+
+ 
+
+55.求对象发生事务时回退段及块号
+
+select a.segment_name,a.header_file,a.header_block
+
+from dba_segments a,dba_rollback_segs b
+
+where a.segment_name=b.segment_name and b.segment_id='&1'
+
+ 
+
+56.9i的在线重定义表
+
+/*如果在线重定义的表没有主键需要创建主键*/
+
+exec dbms_redefinition.can_redef_table('cybercafe','announcement');
+
+create table anno2 as select * from announcement
+
+exec dbms_redefinition.start_redef_table('cybercafe','announcement','anno2');
+
+exec dbms_redefinition.sync_interim_table('cybercafe','announcement','anno2');
+
+exec dbms_redefinition.finish_redef_table('cybercafe','announcement','anno2');
+
+drop table anno2
+
+exec dbms_redefinition.abort_redef_table('cybercafe','announcement','anno2');
+
+ 
+
+57.常用的logmnr脚本(cybercafe)
+
+exec sys.dbms_logmnr_d.build(dictionary_filename =>'esal',dictionary_location =>'/home/oracle/logmnr');
+
+exec sys.dbms_logmnr.add_logfile(logfilename=>'/home/oracle/oradata/esal/archive/1_24050.dbf', ptions=>sys.dbms_logmnr.new);
+
+exec sys.dbms_logmnr.add_logfile(logfilename=>'/home/oracle/oradata/esal/archive/1_22912.dbf', ptions=>sys.dbms_logmnr.addfile);
+
+exec sys.dbms_logmnr.add_logfile(logfilename=>'/home/oracle/oradata/esal/archive/1_22913.dbf', ptions=>sys.dbms_logmnr.addfile);
+
+exec sys.dbms_logmnr.add_logfile(logfilename=>'/home/oracle/oradata/esal/archive/1_22914.dbf', ptions=>sys.dbms_logmnr.addfile);
+
+exec sys.dbms_logmnr.start_logmnr(dictfilename=>'/home/oracle/logmnr/esal.ora');
+
+create table logmnr2 as select * from v$logmnr_contents;
