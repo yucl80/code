@@ -1,0 +1,26 @@
+# The default reserved bytes for one batch operation
+--rocksdb_batch_size=4096
+# The default block cache size used in BlockBasedTable.
+# The unit is MB. 我们生产服务器内存为128G
+--rocksdb_block_cache=44024
+
+############## rocksdb Options ##############
+--rocksdb_disable_wal=true
+# rocksdb DBOptions in json, each name and value of option is a string, given as "option_name":"option_value" separated by comma
+--rocksdb_db_options={"max_subcompactions":"3","max_background_jobs":"3"}
+# rocksdb ColumnFamilyOptions in json, each name and value of option is string, given as "option_name":"option_value" separated by comma
+--rocksdb_column_family_options={"disable_auto_compactions":"false","write_buffer_size":"67108864","max_write_buffer_number":"4","max_bytes_for_level_base":"268435456"}
+# rocksdb BlockBasedTableOptions in json, each name and value of option is string, given as "option_name":"option_value" separated by comma
+--rocksdb_block_based_table_options={"block_size":"8192"}
+
+--max_handlers_per_req=10
+--heartbeat_interval_secs=10
+
+# 新添加参数
+--raft_rpc_timeout_ms=5000
+--raft_heartbeat_interval_secs=10
+--wal_ttl=14400
+--max_batch_size=512
+# 参数配置减小内存使用
+--enable_partitioned_index_filter=true
+--max_edge_returned_per_vertex=10000
