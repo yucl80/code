@@ -1,0 +1,37 @@
+ {
+              "vendor": "com.fasterxml.jackson.core",
+              "name": "jackson-databind",
+              "version": "2.8.11.1",
+              "language": "Java",
+              "direct": false,
+              "paths": [
+                "META-INF/maven/com.alibaba/druid-spring-boot-starter/pom.xml/[com.alibaba:druid-spring-boot-starter:1.2.8]/[org.springframework.boot:spring-boot-starter-web:1.5.12.RELEASE]/[com.fasterxml.jackson.core:jackson-databind:2.8.11.1]"
+              ],
+              "vulnerabilities": [
+                {
+                  "name": "FasterXML jackson-databind 代码问题漏洞",
+                  "id": "XMIRROR-2020-36186",
+                  "cve_id": "CVE-2020-36186",
+                  "cnnvd_id": "CNNVD-202101-333",
+                  "cnvd_id": "CNVD-2021-03347",
+                  "cwe_id": "CWE-502",
+                  "description": "FasterXML jackson-databind是一个基于JAVA可以将XML和JSON等数据格式与JAVA对象进行转换的库。Jackson可以轻松的将Java对象转换成json对象和xml文档，同样也可以将json、xml转换成Java对象。 \nFasterXML jackson-databind 2.x before 2.9.10.8 存在代码问题漏洞，该漏洞源于org.apache.tomcat.dbcp.dbcp.datasources.PerUserPoolDataSource错误地处理serialization gadgets 和 typing的交互。",
+                  "suggestion": "目前厂商已发布升级补丁以修复漏洞，补丁获取链接： \nhttps://github.com/FasterXML/jackson-databind/issues/2997",
+                  "attack_type": "远程",
+                  "release_date": "2021-01-06",
+                  "security_level_id": 2,
+                  "exploit_level_id": 0
+                },
+                {
+                  "name": "FasterXML jackson-databind 代码问题漏洞",
+                  "id": "XMIRROR-2018-19361",
+                  "cve_id": "CVE-2018-19361",
+                  "cnnvd_id": "CNNVD-201901-024",
+                  "cnvd_id": "CNVD-2019-37151",
+                  "cwe_id": "CWE-502",
+                  "description": "FasterXML jackson-databind是一个基于JAVA可以将XML和JSON等数据格式与JAVA对象进行转换的库。Jackson可以轻松的将Java对象转换成json对象和xml文档，同样也可以将json、xml转换成Java对象。 FasterXML Jackson-databind 2.9.8之前的2.x版本中存在代码问题漏洞。目前尚无此漏洞的相关信息，请随时关注CNNVD或厂商公告。",
+                  "release_date": "2019-01-02",
+                  "security_level_id": 1,
+                  "exploit_level_id": 0
+                }
+                ]
