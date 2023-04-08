@@ -1,3 +1,9 @@
+ mvn -Pprod clean -DskipTests=true install
+mvn org.cyclonedx:cyclonedx-maven-plugin:makeBom
+ 
+ 
+ 
+ 
  {
               "vendor": "com.fasterxml.jackson.core",
               "name": "jackson-databind",
