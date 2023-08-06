@@ -13,7 +13,10 @@ void printClassAndMethods(CXCursor cursor)
 {
   if (clang_getCursorKind(cursor) == CXCursor_CXXMethod || clang_getCursorKind(cursor) == CXCursor_FunctionDecl)
   {
-    cout << "Method: " << clang_getCursorSpelling(cursor) << endl;
+
+    CXType methodType = clang_getCursorType(cursor);
+    CXString methodTypeString = clang_getTypeSpelling(methodType);
+    cout << "Method: " << clang_getCursorSpelling(cursor) << " (" << methodTypeString << ")" << endl;
 
     // 获取方法调用的其他方法
     clang_visitChildren(
@@ -26,18 +29,21 @@ void printClassAndMethods(CXCursor cursor)
           CXCursor methodCursor = clang_getCursorDefinition(referencedCursor);
           CXCursor classCursor = clang_getCursorSemanticParent(methodCursor);
           if (clang_getCursorKind(classCursor) == CXCursor_ClassDecl) {
+            CXType referencedMethodType = clang_getCursorType(methodCursor);
+            CXString referencedMethodTypeString = clang_getTypeSpelling(referencedMethodType);
             CXString className = clang_getCursorSpelling(classCursor);
             if (clang_getCString(className) != nullptr && clang_getCString(className)[0] != '\0') {
-              cout << "  Calls: " << clang_getCursorSpelling(referencedCursor) << " (Class: " << className << ")" << endl;
+              cout << "  Calls: " << clang_getCursorSpelling(referencedCursor) << " (" << referencedMethodTypeString << ") (Class: " << className << ")" << endl;
             } else {
-              cout << "  Calls: " << clang_getCursorSpelling(referencedCursor) << endl;
-            }      
-          
-             
+              cout << "  Calls: " << clang_getCursorSpelling(referencedCursor) << " (" << referencedMethodTypeString << ")" << endl;
+            }
+
           } else {
+            CXType referencedMethodType = clang_getCursorType(methodCursor);
+            CXString referencedMethodTypeString = clang_getTypeSpelling(referencedMethodType);
             CXString fileName = clang_getCursorSpelling(classCursor);
             if (clang_getCString(fileName) != nullptr && clang_getCString(fileName)[0] != '\0') {
-                cout << "  Calls: " << clang_getCursorSpelling(referencedCursor) <<" (File:"  << fileName << ")" << endl;
+                cout << "  Calls: " << clang_getCursorSpelling(referencedCursor) <<" (File:"  << fileName << ")"  << " (" << referencedMethodTypeString << ")"<< endl;
              }
           }
         }
